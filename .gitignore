@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime app data
+wbsstool/session/
+wbsstool/logs/
+wbsstool/database.db
+tests/_tmp/
+
+# OS/editor
+.DS_Store
+Thumbs.db

@@ -19,5 +19,13 @@ python -m pip install -r requirements.txt pyinstaller
 echo "[4/5] Building executable..."
 pyinstaller --noconfirm --clean --windowed --name WBSSender main.py
 
-echo "[5/5] Build finished."
+if [[ -d "runtime" ]]; then
+  echo "[5/6] Copying bundled runtime folder..."
+  rm -rf dist/WBSSender/runtime
+  cp -r runtime dist/WBSSender/runtime
+else
+  echo "[5/6] No runtime folder found. Skipping runtime copy."
+fi
+
+echo "[6/6] Build finished."
 echo "Output: dist/WBSSender/WBSSender"

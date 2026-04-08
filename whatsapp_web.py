@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
@@ -7,8 +8,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import os
+import platform
 import time
-from config import SESSION_DIR
+from config import BASE_DIR, SESSION_DIR
 
 
 def normalize_phone(phone):
@@ -30,13 +32,53 @@ class WhatsAppWeb:
 
         options = Options()
         options.add_argument(f"--user-data-dir={SESSION_DIR}")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
 
         self.options = options
         self.driver = None
+        self.browser_binary_path, self.driver_binary_path = self._resolve_bundled_binaries()
+        if self.browser_binary_path:
+            self.options.binary_location = self.browser_binary_path
 
     def _ensure_driver(self):
         if self.driver is None:
-            self.driver = webdriver.Chrome(options=self.options)
+            if self.driver_binary_path:
+                service = Service(executable_path=self.driver_binary_path)
+                self.driver = webdriver.Chrome(service=service, options=self.options)
+            else:
+                self.driver = webdriver.Chrome(options=self.options)
+
+    def _first_existing_path(self, candidates):
+        for candidate in candidates:
+            if os.path.isfile(candidate):
+                return candidate
+        return None
+
+    def _resolve_bundled_binaries(self):
+        runtime_dir = os.path.join(BASE_DIR, "runtime")
+        system_name = platform.system().lower()
+
+        if system_name == "windows":
+            browser_candidates = [
+                os.path.join(runtime_dir, "chromium", "chrome.exe"),
+                os.path.join(runtime_dir, "chromium", "chromium.exe"),
+            ]
+            driver_candidates = [
+                os.path.join(runtime_dir, "chromedriver", "chromedriver.exe"),
+            ]
+        else:
+            browser_candidates = [
+                os.path.join(runtime_dir, "chromium", "chrome"),
+                os.path.join(runtime_dir, "chromium", "chromium"),
+            ]
+            driver_candidates = [
+                os.path.join(runtime_dir, "chromedriver", "chromedriver"),
+            ]
+
+        browser_binary = self._first_existing_path(browser_candidates)
+        driver_binary = self._first_existing_path(driver_candidates)
+        return browser_binary, driver_binary
 
     def stop(self):
         if self.driver is not None:

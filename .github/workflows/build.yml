@@ -33,6 +33,29 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller --noconfirm --clean --windowed --name WBSSender main.py
 
+      - name: Copy runtime folder (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path "runtime") {
+            Remove-Item -Recurse -Force "dist/WBSSender/runtime" -ErrorAction SilentlyContinue
+            Copy-Item -Recurse -Force "runtime" "dist/WBSSender/runtime"
+            Write-Host "Runtime folder copied."
+          } else {
+            Write-Host "No runtime folder found. Skipping."
+          }
+
+      - name: Copy runtime folder (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          if [ -d "runtime" ]; then
+            rm -rf dist/WBSSender/runtime
+            cp -r runtime dist/WBSSender/runtime
+            echo "Runtime folder copied."
+          else
+            echo "No runtime folder found. Skipping."
+          fi
+
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4

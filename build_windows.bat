@@ -19,7 +19,15 @@ python -m pip install -r requirements.txt pyinstaller || goto :error
 echo [4/5] Building executable...
 pyinstaller --noconfirm --clean --windowed --name WBSSender main.py || goto :error
 
-echo [5/5] Build finished.
+if exist "runtime" (
+    echo [5/6] Copying bundled runtime folder...
+    if exist "dist\WBSSender\runtime" rmdir /s /q "dist\WBSSender\runtime"
+    xcopy /e /i /y "runtime" "dist\WBSSender\runtime" >nul || goto :error
+) else (
+    echo [5/6] No runtime folder found. Skipping runtime copy.
+)
+
+echo [6/6] Build finished.
 echo Output: dist\WBSSender\WBSSender.exe
 popd
 exit /b 0
